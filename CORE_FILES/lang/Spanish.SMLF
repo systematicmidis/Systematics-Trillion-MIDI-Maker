@@ -172,7 +172,6 @@ settings_max_ram_hint = 0 = unlimited · caps the preload mode to fit
 settings_check_updates = Check for updates on startup
 settings_backup_on_update = Save a backup of the current files when installing an update
 settings_button_check_updates = Check for updates
-settings_button_downgrade = Downgrade
 settings_button_restore_files = Descargar archivos faltantes
 settings_button_save = Save settings
 restore_confirm = Esto descarga el paquete de la versión actual desde la fuente de actualizaciones y restaura los archivos que falten en la app (los archivos existentes nunca se sobrescriben).
@@ -244,29 +243,16 @@ Latest version: {version}
 Your version:    {current}
 
 # ---------------------------------------------------------------------------
-[downgrade]
-# ---------------------------------------------------------------------------
-downgrade_title = Downgrade the app
-downgrade_window_title = Downgrade — {app_name}
-downgrade_hint = Pick an older version to install.  (current: v{version})
-downgrade_loading = Loading available versions…
-downgrade_none = No older versions published in the feed yet.
-downgrade_none_item = (none)
-downgrade_no_versions = (no versions available)
-downgrade_found = {count} older version(s) found. Select one, then press Download & install.
-downgrade_no_link = This version has no download link in the feed.
-downgrade_close = Close
-
-# ---------------------------------------------------------------------------
 [merge_midi]
 merge_toggle = Combinar otro MIDI en el resultado
 merge_browse = Elegir MIDI...
 merge_clear = Quitar
-merge_hint = Actívalo para añadir un segundo MIDI (sin multiplicar) después de la parte duplicada.
+merge_hint = Actívalo para añadir un segundo MIDI (sin multiplicar) después de la parte duplicada. También sirve un .mid.xz, .gz o .bz2 comprimido.
 merge_none = Ningún MIDI seleccionado
 merge_loading = Cargando MIDI a combinar...
+merge_decompressing = Descomprimiendo el MIDI a combinar... ({size} extraídos)
 merge_loaded = Combinando: {name} ({tracks} pista(s), {notes} notas), añadido una vez
-merge_open_title = Elige el MIDI a combinar (se añade sin multiplicar)
+merge_open_title = Elige el MIDI a combinar: un .mid o un .mid.xz comprimido (se añade sin multiplicar)
 
 [run_dialogs]
 # ---------------------------------------------------------------------------
@@ -315,6 +301,7 @@ file_open_title = Choose a 1-track MIDI file
 file_save_title = Save duplicated MIDI as
 file_default_name = MIDIOUT.mid.xz
 filetype_midi = MIDI files
+filetype_midi_compressed = MIDI comprimido (xz, gz, bz2, zst)
 filetype_midi_archive = Compressed MIDI archive
 filetype_all = All files
 

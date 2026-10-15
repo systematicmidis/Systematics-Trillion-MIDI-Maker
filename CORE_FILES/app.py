@@ -315,9 +315,6 @@ class App:
         self._dl_pending = False
         self._dl_widgets = None
         self._dl_dest = ""
-        self._downgrade_queue: queue.Queue = queue.Queue()
-        self._downgrade_pending = False
-        self._downgrade_versions: list[dict] = []
         self._restore_queue: queue.Queue = queue.Queue()
         self._restore_pending = False
         self._load_queue: queue.Queue = queue.Queue()
@@ -331,8 +328,10 @@ class App:
         # The optional "merge another MIDI" file: parsed like the main input
         # but in its own background load, so the UI never blocks on it.
         self.merge_info: midi_engine.MidiInfo | None = None
+        self.merge_source_path = ""   # the file the user chose (may be an archive)
         self._merge_queue: queue.Queue = queue.Queue()
         self._merge_pending = False
+        self._merge_phase_text = ""   # live "decompressing…" status text
         self._merge_token = 0
         self.current_page = "converting"
         self._scroll_canvas: tk.Canvas | None = None
@@ -1002,13 +1001,6 @@ class App:
                   activeforeground=p["ACCENT_ON"], relief="flat", padx=14,
                   pady=6, font=_font(9, "bold"), cursor="hand2").pack(
             side="left")
-        tk.Button(update_row, text=_t("settings_button_downgrade"),
-                  command=self._open_downgrade_dialog,
-                  bg=p["BUTTON_SECONDARY"], fg=p["TEXT"],
-                  activebackground=p["BUTTON_SECONDARY_HOVER"],
-                  activeforeground=p["TEXT"], relief="flat", padx=14,
-                  pady=6, font=_font(9), cursor="hand2").pack(
-            side="left", padx=(8, 0))
         tk.Button(update_row, text=_t("settings_button_restore_files"),
                   command=self._restore_missing_files,
                   bg=p["BUTTON_SECONDARY"], fg=p["TEXT"],
@@ -1653,154 +1645,6 @@ class App:
             _t("update_up_to_date_title", version=feed["version"],
                current=__version__))
 
-    # -- downgrade ---------------------------------------------------------
-
-    def _open_downgrade_dialog(self) -> None:
-        """Let the user pick an older release (from the feed's 'versions' list)."""
-        p = PALETTE
-        win = tk.Toplevel(self.root)
-        win.title(_t("downgrade_window_title", app_name=APP_NAME))
-        win.configure(bg=p["MAIN_BG"])
-        win.resizable(False, False)
-        win.transient(self.root)
-        self._apply_dialog_titlebar(win)
-
-        frame = tk.Frame(win, bg=p["MAIN_BG"], padx=22, pady=18)
-        frame.pack(fill="both", expand=True)
-        tk.Label(frame, text=_t("downgrade_title"), bg=p["MAIN_BG"],
-                 fg=p["ACCENT"], font=_font(14, "bold")).pack(anchor="w")
-        tk.Label(frame,
-                 text=_t("downgrade_hint", version=__version__),
-                 bg=p["MAIN_BG"], fg=p["TEXT"], font=_font(10)).pack(
-            anchor="w", pady=(4, 8))
-
-        listbox = tk.Listbox(frame, bg=p["CARD"], fg=p["TEXT"],
-                             selectbackground=p["ACCENT"],
-                             selectforeground=p["ACCENT_ON"], relief="flat",
-                             font=_font(10), height=6, highlightthickness=0,
-                             activestyle="none")
-        listbox.pack(fill="both", expand=True)
-
-        status_lbl = tk.Label(frame, text=_t("downgrade_loading"),
-                              bg=p["MAIN_BG"], fg=p["TEXT_MUTED"], font=_font(9))
-        status_lbl.pack(anchor="w", pady=(8, 0))
-        bar = ttk.Progressbar(frame, style="Accent.Horizontal.TProgressbar",
-                              mode="determinate", maximum=1, value=0)
-
-        row = tk.Frame(frame, bg=p["MAIN_BG"])
-        row.pack(fill="x", pady=(12, 0))
-        install_btn = tk.Button(
-            row, text=_t("update_button_download"), state="disabled",
-            command=lambda: self._start_downgrade_download(),
-            bg=p["ACCENT"], fg=p["ACCENT_ON"],
-            activebackground=p["ACCENT_HOVER"],
-            activeforeground=p["ACCENT_ON"], relief="flat", padx=16, pady=8,
-            font=_font(10, "bold"), cursor="hand2")
-        close_btn = tk.Button(row, text=_t("downgrade_close"),
-                              command=win.destroy,
-                              bg=p["BUTTON_SECONDARY"], fg=p["TEXT"],
-                              activebackground=p["BUTTON_SECONDARY_HOVER"],
-                              activeforeground=p["TEXT"], relief="flat",
-                              padx=16, pady=8, font=_font(10),
-                              cursor="hand2")
-        install_btn.pack(side="left")
-        close_btn.pack(side="left", padx=(8, 0))
-        win.grab_set()
-
-        self._downgrade_win = win
-        self._downgrade_listbox = listbox
-        self._downgrade_status = status_lbl
-        self._downgrade_bar = bar
-        self._downgrade_install_btn = install_btn
-        self._downgrade_close_btn = close_btn
-        self._downgrade_versions = []
-        listbox.bind("<<ListboxSelect>>",
-                     lambda _e: self._downgrade_selection())
-        self._downgrade_pending = True
-        threading.Thread(target=self._downgrade_worker,
-                         args=(UPDATE_FEED_URL,), daemon=True).start()
-        self.root.after(200, self._poll_downgrade)
-
-    def _downgrade_worker(self, url: str) -> None:
-        try:
-            feed = updater.fetch_feed(url)
-            if feed is None:
-                self._downgrade_queue.put(("error", _t("update_no_feed")))
-            else:
-                self._downgrade_queue.put(("versions", feed.get("versions", [])))
-        except updater.UpdateError as exc:
-            self._downgrade_queue.put(("error", str(exc)))
-
-    def _poll_downgrade(self) -> None:
-        if (not hasattr(self, "_downgrade_status")
-                or not self._downgrade_status.winfo_exists()):
-            self._downgrade_pending = False
-            return
-        drained = False
-        try:
-            while True:
-                msg = self._downgrade_queue.get_nowait()
-                drained = True
-                if msg[0] == "versions":
-                    self._populate_downgrade_list(msg[1])
-                else:
-                    self._downgrade_status.configure(text=msg[1])
-                    self._downgrade_listbox.insert(
-                        "end", _t("downgrade_no_versions"))
-        except queue.Empty:
-            pass
-        if drained:
-            self._downgrade_pending = False
-            return
-        if self._downgrade_pending:
-            self.root.after(200, self._poll_downgrade)
-
-    def _populate_downgrade_list(self, versions: list) -> None:
-        """Show only versions older than the running one, newest first."""
-        current = updater.parse_version(__version__)
-        rows = [v for v in versions
-                if isinstance(v, dict)
-                and updater.parse_version(str(v.get("version", ""))) < current]
-        rows.sort(key=lambda v: updater.parse_version(v["version"]),
-                  reverse=True)
-        self._downgrade_versions = rows
-        if not rows:
-            self._downgrade_status.configure(
-                text=_t("downgrade_none"))
-            self._downgrade_listbox.insert("end", _t("downgrade_none_item"))
-            return
-        for v in rows:
-            label = f"v{v['version']}"
-            if v.get("notes"):
-                label += " — " + v["notes"].splitlines()[0][:60]
-            self._downgrade_listbox.insert("end", label)
-        self._downgrade_status.configure(
-            text=_t("downgrade_found", count=len(rows)))
-
-    def _downgrade_selection(self) -> None:
-        self._downgrade_install_btn.configure(
-            state="normal" if self._downgrade_listbox.curselection()
-            else "disabled")
-
-    def _start_downgrade_download(self) -> None:
-        sel = self._downgrade_listbox.curselection()
-        if not sel:
-            return
-        v = self._downgrade_versions[sel[0]]
-        if not ((v.get("url") or "").strip()
-                or (v.get("exe_url") or "").strip()):
-            self._downgrade_status.configure(
-                text=_t("downgrade_no_link"))
-            return
-        feed = {"version": v["version"], "name": v.get("name", APP_NAME),
-                "notes": v.get("notes", ""), "url": v["url"],
-                "exe_url": v.get("exe_url", "")}
-        # Reuse the same download/install/restart flow as updates.
-        self._start_download(feed, self._downgrade_win, self._downgrade_bar,
-                             self._downgrade_status,
-                             self._downgrade_install_btn,
-                             self._downgrade_close_btn)
-
     # -- dynamic labels ----------------------------------------------------
 
     def _mode_text(self) -> str:
@@ -2065,6 +1909,8 @@ class App:
             parent=self.root, title=_t("merge_open_title"),
             initialdir=os.path.dirname(initial) if initial else None,
             filetypes=[(_t("filetype_midi"), "*.mid *.midi"),
+                       (_t("filetype_midi_compressed"),
+                        "*.xz *.gz *.bz2 *.zst"),
                        (_t("filetype_all"), "*.*")])
         if not path:
             return
@@ -2081,7 +1927,9 @@ class App:
         """Forget the merge MIDI (keeps the option ticked but empty)."""
         self._merge_token += 1  # invalidate any load still in flight
         self._merge_pending = False
+        self._merge_phase_text = ""
         self.merge_info = None
+        self.merge_source_path = ""
         self.merge_path_var.set("")
         self.settings["last_merge_input"] = ""
         app_settings.save(self.settings)
@@ -2109,30 +1957,44 @@ class App:
         """Parse the merge MIDI on a worker thread (same pattern as the input).
 
         The main file's loader is reused so huge merge files still stream
-        instead of freezing the window.
+        instead of freezing the window, and a compressed merge file
+        (``.mid.xz`` / ``.gz`` / ``.bz2``) is decompressed first — on this
+        thread, so extracting a multi-gigabyte MIDI never blocks the UI.
         """
         self._merge_pending = True
         self._merge_token += 1
         token = self._merge_token
+        self.merge_source_path = path
+        self._merge_phase_text = ""
         self._refresh_merge_controls()
+
+        def status(stage: str, done: int, _total: int) -> None:
+            """Hand the current load stage to the UI thread."""
+            if stage == "decompress":
+                self._merge_queue.put(
+                    (token, "phase",
+                     _t("merge_decompressing",
+                        size=midi_engine.human_size(done))))
+            else:
+                self._merge_queue.put((token, "phase", _t("merge_loading")))
 
         def load() -> None:
             try:
-                info = midi_engine.load_midi_fast(path, ram_mode="normal",
-                                                  max_ram_mb=0)
-                self._merge_queue.put((token, info, ""))
+                info = midi_engine.load_merge_midi(path, progress_cb=status)
+                self._merge_queue.put((token, "ok", info))
             except midi_engine.MidiError as exc:
-                self._merge_queue.put((token, None, str(exc)))
+                self._merge_queue.put((token, "error", str(exc)))
             except Exception as exc:  # never let a worker die silently
                 self._merge_queue.put(
-                    (token, None, _t("load_unexpected_error", error=exc)))
+                    (token, "error",
+                     _t("load_unexpected_error", error=exc)))
 
         threading.Thread(target=load, daemon=True).start()
         self.root.after(100, self._poll_merge)
 
     def _poll_merge(self) -> None:
         try:
-            token, info, error = self._merge_queue.get_nowait()
+            token, kind, payload = self._merge_queue.get_nowait()
         except queue.Empty:
             if self._merge_pending:
                 self.root.after(100, self._poll_merge)
@@ -2141,13 +2003,20 @@ class App:
             if self._merge_pending:
                 self.root.after(100, self._poll_merge)
             return
+        if kind == "phase":
+            # Still working (decompressing / parsing): show live progress.
+            self._merge_phase_text = payload
+            self._refresh_merge_controls()
+            self.root.after(100, self._poll_merge)
+            return
         self._merge_pending = False
-        if info is None:
+        self._merge_phase_text = ""
+        if kind == "error":
             self.merge_info = None
             self._refresh_merge_controls()
-            self._error(error or _t("load_failed"))
+            self._error(payload or _t("load_failed"))
         else:
-            self.merge_info = info
+            self.merge_info = payload
             self._refresh_merge_controls()
         self._refresh_dynamic()
 
@@ -2164,12 +2033,15 @@ class App:
         if not enabled:
             self.merge_status_var.set(_t("merge_hint"))
         elif self._merge_pending:
-            self.merge_status_var.set(_t("merge_loading"))
+            self.merge_status_var.set(
+                self._merge_phase_text or _t("merge_loading"))
         elif self.merge_info is not None:
             n = len(self.merge_info.track_chunks)
             self.merge_status_var.set(_t(
                 "merge_loaded",
-                name=os.path.basename(self.merge_info.path),
+                # the file the user picked, not the temp the archive became
+                name=os.path.basename(self.merge_source_path
+                                      or self.merge_info.path),
                 tracks=n, s="" if n == 1 else "s",
                 notes=f"{self.merge_info.note_count:,}"))
         else:
@@ -2456,15 +2328,13 @@ class App:
                 self._error(_t("run_error_merge_not_loaded"))
                 return
             if self.merge_info is None:
-                try:
-                    self.merge_info = midi_engine.load_midi_fast(
-                        merge_path, ram_mode="normal", max_ram_mb=0)
-                except midi_engine.MidiError as exc:
-                    self._error(str(exc))
-                    return
-                except Exception as exc:
-                    self._error(_t("load_unexpected_error", error=exc))
-                    return
+                # Nothing parsed yet (the background load failed or was never
+                # started). Re-load it in the background instead of blocking
+                # the window on what may be a multi-gigabyte decompression —
+                # the user presses Start again once it is ready.
+                self._start_merge_load(merge_path)
+                self._info(_t("run_error_merge_not_loaded"))
+                return
             merge_info = self.merge_info
             if merge_info.division != self.info.division:
                 self._error(_t(

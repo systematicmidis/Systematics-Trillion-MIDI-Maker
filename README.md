@@ -25,6 +25,13 @@ megabytes. This app does the multiplying and the compressing in one step.
   classic use: duplicate the *arts* ×65,534, then lay an unduplicated *melody*
   underneath — the multiplier is automatically capped so the melody's tracks
   fit inside the 65,535-track limit.
+* **Merge straight from a compressed file.** The merge field also accepts
+  `.mid.xz`, `.mid.gz` and `.mid.bz2`, including the app's extra compression
+  passes (`.mid.xz.xz`). The archive is unpacked in the background with a live
+  progress line, so a shared `.xz` can be merged without extracting it first.
+  `.zip`, `.7z` and `.zst` are refused: a zip or 7z holds one entry per track
+  rather than a single MIDI, and this Python build cannot stream `.zst` back
+  in — use 7-Zip to extract those to a `.mid` first.
 * **Pick the archive format.** `.xz` (default), `.gz`, `.bz2`, `.zst`, `.zip`
   or `.7z`, at a compression preset from 0 (fastest) to 9 (smallest), with an
   optional second/third compression pass.

@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import bz2
 import concurrent.futures
+import contextlib
 import gzip
 import heapq
 import io
@@ -1060,6 +1061,193 @@ def load_midi_fast(path: str, progress_cb=None, ram_mode: str = "normal",
         info = _validate_info(loader.load(path, progress_cb=progress_cb))
 
     return _apply_ram_mode(info, effective, capped, max_ram_mb)
+
+
+# --------------------------------------------------------------------------
+# Reading a compressed MIDI back in (the "merge another MIDI" input)
+# --------------------------------------------------------------------------
+# The app writes .mid.xz / .mid.gz / .mid.bz2 / .mid.zst as a *stream* of the
+# MIDI bytes, and an extra compression pass just recompresses that stream (so
+# .mid.xz.xz decodes back to the same MIDI). The stream codecs can therefore be
+# piped straight back into the parser, which is what lets a compressed MIDI be
+# used as the merge input.
+#
+# Three formats cannot be read back:
+#   * .zip / .7z hold one entry per track rather than a single MIDI stream, so
+#     they cannot be reassembled into one file by decompression alone.
+#   * .zst — this Python build exposes only a one-shot decompressor, with no
+#     streaming reader, so reading one back would need the whole (possibly
+#     multi-gigabyte) MIDI in RAM at once.
+# All three are refused with an explanation rather than failing obscurely.
+
+STREAM_SUFFIXES = (".xz", ".gz", ".bz2")
+
+_UNREADABLE = {
+    "zst": ("zstd-compressed",
+            "extract it to a .mid with 7-Zip first, or save the merge MIDI as "
+            ".xz, .gz or .bz2"),
+    "zip": ("a zip archive",
+            "save the merge MIDI as .xz, .gz or .bz2 instead (a zip holds one "
+            "entry per track, so it cannot be read back as a single MIDI)"),
+    "7z": ("a 7z archive",
+           "save the merge MIDI as .xz, .gz or .bz2 instead (a 7z holds one "
+           "entry per track, so it cannot be read back as a single MIDI)"),
+}
+
+KNOWN_SUFFIXES = STREAM_SUFFIXES + tuple(
+    "." + name for name in _UNREADABLE)
+
+
+def compressed_layers(path: str) -> list[str]:
+    """Compression codecs applied to ``path``, outermost first.
+
+    ``song.mid.gz.xz`` gives ``["xz", "gz"]`` — an extra compression pass
+    wraps the .gz in an .xz, so the .xz has to come off first. Returns ``[]``
+    for a name that carries no compression suffix.
+    """
+    name = os.path.basename(path).lower()
+    layers: list[str] = []
+    while name:
+        for suffix in KNOWN_SUFFIXES:
+            if name.endswith(suffix):
+                layers.append(suffix[1:])
+                name = name[: -len(suffix)]
+                break
+        else:
+            break
+    return layers
+
+
+def _refuse_unreadable(path: str, layers: list) -> None:
+    """Raise an explanatory error for a compression this build cannot read."""
+    for layer in layers:
+        if layer in _UNREADABLE:
+            what, advice = _UNREADABLE[layer]
+            raise MidiError(
+                f"{os.path.basename(path)} is {what}, which this app cannot "
+                f"read back into a MIDI — {advice}.")
+
+
+def _open_decompressed(path: str, layers: list, stack) -> object:
+    """Open ``path`` with one reader per compression layer (outermost first)."""
+    stream = stack.enter_context(open(path, "rb"))
+    reader = stream
+    for layer in layers:
+        if layer == "xz":
+            reader = stack.enter_context(lzma.open(reader, "rb"))
+        elif layer == "gz":
+            reader = stack.enter_context(gzip.GzipFile(fileobj=reader))
+        else:                                    # "bz2"
+            reader = stack.enter_context(bz2.BZ2File(reader))
+    return reader
+
+
+def _discard_temp(path: str) -> None:
+    """Delete an extracted temp ``.mid`` and the folder created for it."""
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+    try:
+        os.rmdir(os.path.dirname(path))
+    except OSError:
+        pass
+
+
+def decompress_to_temp(path: str, progress_cb=None) -> str:
+    """Stream a compressed MIDI into a temporary ``.mid``, returning its path.
+
+    Reads through the codec chain in 1 MiB chunks, so a multi-gigabyte MIDI
+    never lands in RAM, and stops as soon as the extracted data would eat into
+    :data:`DISK_RESERVE` free space on the target drive (raising
+    :class:`DiskFullError`). ``progress_cb(bytes_done, limit)`` is called at
+    most ~4 times a second. The caller owns and must delete the returned file.
+    """
+    layers = compressed_layers(path)
+    _refuse_unreadable(path, layers)
+    if not layers:
+        raise MidiError(f"{os.path.basename(path)} is not a compressed MIDI.")
+
+    out_dir = tempfile.mkdtemp(prefix="stmm_merge_")
+    dest = os.path.join(out_dir, "merge.mid")
+    # A drive we can't stat (free == 0) leaves the guard off and lets the OS
+    # surface the write error; otherwise the cap is what is left once the
+    # reserve is kept back — which is 0, not "unlimited", when the drive is
+    # already below the reserve.
+    free = free_disk_space(dest)
+    room_known = free > 0
+    limit = max(0, free - DISK_RESERVE)
+    written = 0
+    last_report = 0.0
+    try:
+        with contextlib.ExitStack() as stack:
+            reader = _open_decompressed(path, layers, stack)
+            with open(dest, "wb") as out:
+                while True:
+                    chunk = reader.read(1 << 20)
+                    if not chunk:
+                        break
+                    written += len(chunk)
+                    if room_known and written > limit:
+                        raise DiskFullError(
+                            f"Not enough disk space on {_drive_name(dest)}: "
+                            f"{os.path.basename(path)} expands past the free "
+                            f"space ({human_size(free)} free, and the app "
+                            f"keeps {human_size(DISK_RESERVE)} in reserve). "
+                            "Extract it manually, free up space, or use a "
+                            "smaller merge MIDI.")
+                    out.write(chunk)
+                    if progress_cb is not None:
+                        now = time.monotonic()
+                        if now - last_report >= 0.25:
+                            last_report = now
+                            progress_cb(written, limit)
+    except Exception as exc:
+        _discard_temp(dest)
+        if isinstance(exc, MidiError):
+            raise
+        raise MidiError(
+            f"Could not decompress {os.path.basename(path)}: {exc}") from exc
+    if progress_cb is not None:
+        progress_cb(written, limit)
+    return dest
+
+
+def load_merge_midi(path: str, progress_cb=None) -> MidiInfo:
+    """Parse the MIDI chosen as the merge input, decompressing it if needed.
+
+    A plain ``.mid`` / ``.midi`` is parsed in place. ``.mid.xz``, ``.mid.gz``
+    and ``.mid.bz2`` — including the app's extra compression passes, such as
+    ``.mid.xz.xz`` — are streamed into a temporary ``.mid`` first, which is
+    removed again before this returns; the parsed tracks live in the returned
+    :class:`MidiInfo`.
+
+    ``progress_cb(stage, done, total)`` reports ``("decompress", bytes_done,
+    limit)`` while extracting and ``("parse", 0, 0)`` once parsing starts.
+    Raises :class:`MidiError` with a readable message for the container and
+    one-shot formats this build cannot read.
+    """
+    layers = compressed_layers(path)
+    if not layers:
+        return load_midi_fast(path, ram_mode="normal", max_ram_mb=0)
+
+    report = progress_cb if progress_cb is not None else (lambda *_a: None)
+    temp = ""
+    try:
+        temp = decompress_to_temp(
+            path, progress_cb=lambda done, limit: report("decompress",
+                                                         done, limit))
+        report("parse", 0, 0)
+        info = load_midi_fast(temp, ram_mode="normal", max_ram_mb=0)
+        # The tracks came from ``path``, so report that file as the info's
+        # source. Without this the UI (merge status, finish dialog) would name
+        # the temporary .mid the archive was extracted to, which no longer
+        # exists by the time this returns.
+        info.path = path
+        return info
+    finally:
+        if temp:
+            _discard_temp(temp)
 
 
 # --------------------------------------------------------------------------

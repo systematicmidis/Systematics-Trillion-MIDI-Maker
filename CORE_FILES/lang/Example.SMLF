@@ -155,7 +155,6 @@ settings_max_ram_hint = [EX] 0 = unlimited · caps the preload mode to fit [EX]
 settings_check_updates = [EX] Check for updates on startup [EX]
 settings_backup_on_update = [EX] Save a backup of the current files when installing an update [EX]
 settings_button_check_updates = [EX] Check for updates [EX]
-settings_button_downgrade = [EX] Downgrade [EX]
 settings_button_restore_files = [EX] Download missing files [EX]
 settings_button_save = [EX] Save settings [EX]
 restore_confirm = [EX] This downloads the current release package from the update feed and restores any files that are missing from the app (existing files are never overwritten).
@@ -227,29 +226,16 @@ Latest version: {version}
 Your version:    {current} [EX]
 
 # ---------------------------------------------------------------------------
-[downgrade]
-# ---------------------------------------------------------------------------
-downgrade_title = [EX] Downgrade the app [EX]
-downgrade_window_title = [EX] Downgrade — {app_name} [EX]
-downgrade_hint = [EX] Pick an older version to install.  (current: v{version}) [EX]
-downgrade_loading = [EX] Loading available versions… [EX]
-downgrade_none = [EX] No older versions published in the feed yet. [EX]
-downgrade_none_item = [EX] (none) [EX]
-downgrade_no_versions = [EX] (no versions available) [EX]
-downgrade_found = [EX] {count} older version(s) found. Select one, then press Download & install. [EX]
-downgrade_no_link = [EX] This version has no download link in the feed. [EX]
-downgrade_close = [EX] Close [EX]
-
-# ---------------------------------------------------------------------------
 [merge_midi]
 merge_toggle = [EX] Merge another MIDI into the output [EX]
 merge_browse = [EX] Choose MIDI... [EX]
 merge_clear = [EX] Clear [EX]
-merge_hint = [EX] Tick this to append a second MIDI (unduplicated) after the duplicated part. [EX]
+merge_hint = [EX] Tick this to append a second MIDI (unduplicated) after the duplicated part. A compressed .mid.xz, .gz or .bz2 works too. [EX]
 merge_none = [EX] No MIDI chosen [EX]
 merge_loading = [EX] Loading merge MIDI... [EX]
+merge_decompressing = [EX] Decompressing the merge file... ({size} extracted) [EX]
 merge_loaded = [EX] Merging: {name} ({tracks} track{s}, {notes} notes), added once [EX]
-merge_open_title = [EX] Choose the MIDI to merge (appended unduplicated) [EX]
+merge_open_title = [EX] Choose the MIDI to merge - a .mid or a compressed .mid.xz (appended unduplicated) [EX]
 
 [run_dialogs]
 # ---------------------------------------------------------------------------
@@ -298,6 +284,7 @@ file_open_title = [EX] Choose a 1-track MIDI file [EX]
 file_save_title = [EX] Save duplicated MIDI as [EX]
 file_default_name = [EX] MIDIOUT.mid.xz [EX]
 filetype_midi = [EX] MIDI files [EX]
+filetype_midi_compressed = [EX] Compressed MIDI (xz, gz, bz2, zst) [EX]
 filetype_midi_archive = [EX] Compressed MIDI archive [EX]
 filetype_all = [EX] All files [EX]
 
