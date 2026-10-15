@@ -1,0 +1,417 @@
+# ============================================================================
+#  English.SystematicMIDISLanguageFile  (.SMLF)
+#  Systematics TRILLION MIDI maker - English (default) language file
+#  Version: 1.6.0.0
+#
+#  This file can be opened in any plain-text editor (Notepad, Notepad++,
+#  VS Code, ...).
+#
+#  FORMAT
+#  ------
+#    - Lines beginning with '#' are comments and are ignored.
+#    - Blank lines are ignored.
+#    - Sections are marked with [Section Name].
+#    - Every string is a line in the form:   key = value
+#    - The key on the LEFT must never be changed.
+#    - The value on the RIGHT is the text shown to the user - translate that.
+#    - {placeholders} like {version} or {count} are replaced by the app at
+#      runtime. Keep them exactly as they are (you may move them around).
+#    - A line with \n inside the value is a line break (like pressing Enter
+#      twice in a row is not; a single \n is a new line).
+#
+#  HOW TO TRANSLATE
+#  ----------------
+#    1. Copy this file to e.g. "Spanish.SMLF" in this same folder.
+#    2. Open the copy in Notepad and translate every value (right side).
+#    3. Do not translate section names, keys, or {placeholders}.
+#    4. Save the file as UTF-8 (Notepad: File > Save As > Encoding: UTF-8).
+#    5. The app picks the language from this folder - see the app's settings.
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+[app]
+# ---------------------------------------------------------------------------
+app_name = Systematics TRILLION MIDI maker
+sidebar_footer_1 = Systematics TRILLION
+sidebar_footer_2 = MIDI MAKER v{version}
+sidebar_updates = Updates
+sidebar_update_none = No update info yet.
+topbar_brand = Systematics
+topbar_sub_brand = TRILLION MIDI maker
+topbar_version = v{version}
+
+# ---------------------------------------------------------------------------
+[navigation]
+# ---------------------------------------------------------------------------
+nav_converting = Converting
+nav_help = Help
+nav_about = About
+nav_settings = Settings
+
+# ---------------------------------------------------------------------------
+[main_buttons]
+# ---------------------------------------------------------------------------
+tile_start = Start
+tile_stop = Stop
+tile_customise = Customise
+tile_file_properties = File properties
+
+# ---------------------------------------------------------------------------
+[converting_page]
+# ---------------------------------------------------------------------------
+tracks_label = Tracks ×
+output_hint = (1 – 65,535) · auto-saved as {extension}
+card_click_hint = Click to choose a MIDI file
+card_loading = Loading…
+card_untitled = Untitled
+card_line = {notes} notes · {tracks} track{s}
+card_to_multiply = {count} to multiply
+card_note_mode = note multiply
+card_in_ram = {size} in RAM ({mode})
+status_ready = Ready.
+status_ready_with_multiplier = Ready. Set to x{multiplier}.
+status_loading_file = Loading file…
+status_loading_track = Loading track {done}/{total}. Length: {bytes} bytes
+status_note_plan = Ready. {notes} notes → 1 track (≈{bytes} bytes)
+status_multiplying_notes = Multiplying notes {done}/{total}. Length: {bytes} bytes
+status_capped = (×{multiplier} capped to ×{effective})
+status_compress_pass = Pass {pass_num}… {done} / {total} bytes
+status_done = Done. {uncompressed} bytes MIDI → {compressed} bytes {extension}
+status_cancelled = Cancelled.
+status_failed = Failed.
+status_cancelling = Cancelling…
+speed_programme = Programme speed: {speed}
+mode_current = Current: {mode} · x{multiplier} · P{preset}{extra}
+mode_fast = Fast
+mode_streamed = Streamed
+mode_extra_double =  · double
+mode_extra_triple =  · triple
+mode_notes = Notes ×{multiplier} → 1 track
+
+# ---------------------------------------------------------------------------
+[loading]
+# ---------------------------------------------------------------------------
+load_track_progress = Track {done}/{total} loaded. Loaded note(s): {notes}
+load_loaded_summary = Loaded {notes} note(s) · {tracks} track{s} · RAM: {mode}
+load_capped_note = (capped by max RAM)
+load_failed = Could not load the file.
+load_unexpected_error = Unexpected error: {error}
+terminal_loading = [Systematics] Loading MIDI: {path}
+terminal_track_loaded = Track {done}/{total} loaded. Loaded note(s): {notes}
+terminal_loaded = Track {tracks}/{tracks} loaded. Loaded note(s): {notes} ({size})
+terminal_failed = Failed to load MIDI: {error}
+
+# ---------------------------------------------------------------------------
+[file_properties]
+# ---------------------------------------------------------------------------
+fp_no_file = No file chosen yet.
+
+Click the document in the middle to choose a MIDI file.
+fp_window_title = File properties — {app_name}
+file_current = Currently chosen file: {name}
+fp_file = File
+fp_path = Path
+fp_size = Size
+fp_format = Format
+fp_format_value = Type {format}
+fp_tracks = Tracks
+fp_notes = Notes
+fp_loader = Loader
+fp_ram_preload = RAM preload
+fp_memory = Memory (in RAM)
+fp_end_of_track = End of track
+yes = yes
+no = no
+dialog_ok = OK
+fp_tracks_to_multiply = Tracks to multiply (repeat ×{multiplier}):
+fp_track_row = Track {number} — {notes} notes
+fp_track_row_named = Track {number} — {notes} notes ({name})
+fp_output = Output:
+fp_choose = Choose…
+fp_close = Close
+
+# ---------------------------------------------------------------------------
+[settings_page]
+# ---------------------------------------------------------------------------
+settings_title = Settings
+settings_theme = Theme
+settings_language = Language
+settings_dark_mode = Dark mode
+settings_light_mode = Light mode
+settings_window_size = Window size
+settings_default_multiplier = Default multiplier
+settings_compression_preset = Compression preset
+settings_preset_hint = 0 = fastest · 9 = smallest
+settings_fast_mode = Fast mode (concatenated streams — near instant, larger file; large files use this automatically)
+settings_compression_passes = Compression passes
+settings_compression_passes_hint = 1 = plain · 2 = +.xz · 3 = +.xz.xz
+settings_archive_format = Archive format
+settings_archive_format_hint = Container/stream the MIDI is stored in
+archive_format_xz = XZ (.xz)
+archive_format_gz = GZIP (.gz)
+archive_format_bz2 = BZIP2 (.bz2)
+archive_format_zst = ZSTD (.zst)
+archive_format_zip = ZIP (.zip)
+archive_format_7z = 7-ZIP (.7z)
+settings_note_multiply = Multiply notes instead of tracks (merge into one track)
+settings_note_multiply_hint = Every note is repeated and merged into a single track (no 65,535-track limit).
+settings_merge_speed = Merge speed
+settings_merge_speed_hint = Faster tiers trade a bigger file for speed
+merge_speed_balanced = Balanced
+merge_speed_fast = Fast
+merge_speed_turbo = Turbo
+settings_remember_input = Remember last input file
+settings_auto_output = Suggest an output path automatically
+settings_memory = Memory (RAM preload)
+settings_ram_normal = Normal (1×)
+settings_ram_double = Double (2×)
+settings_ram_triple = Triple (3×)
+settings_ram_hint = How much of the loaded MIDI stays in memory (1× ≈ the file's size). Applies to the next file load.
+settings_max_ram = Max RAM per loaded file (MB)
+settings_max_ram_hint = 0 = unlimited · caps the preload mode to fit
+settings_check_updates = Check for updates on startup
+settings_backup_on_update = Save a backup of the current files when installing an update
+settings_button_check_updates = Check for updates
+settings_button_downgrade = Downgrade
+settings_button_restore_files = Download missing files
+settings_button_save = Save settings
+restore_confirm = This downloads the current release package from the update feed and restores any files that are missing from the app (existing files are never overwritten).
+
+Continue?
+restore_downloading = Downloading missing files…
+restore_confirm_files = The following {count} file(s) are missing on your computer. Download and restore them?
+
+{files}
+restore_no_source = The update feed has no source package URL to download from.
+restore_done_count = Restored {count} missing file(s).
+restore_done = Restored {count} missing file(s):
+
+{files}
+restore_all_present = All files are present.
+restore_all_present_msg = Every app file is already in place — nothing was missing.
+restore_cancelled = Restore cancelled — no files were changed.
+restore_failed = Could not restore missing files.
+settings_button_reset = Reset defaults
+settings_saved = Settings saved.
+settings_reset_confirm = Reset all settings to their defaults?
+settings_error_multiplier_number = Multiplier must be a whole number.
+settings_error_multiplier_range = Multiplier must be between 1 and 65535.
+settings_error_max_ram_number = Max RAM must be a whole number of MB (0 = unlimited).
+settings_error_max_ram_negative = Max RAM cannot be negative (0 = unlimited).
+
+# ---------------------------------------------------------------------------
+[updates]
+# ---------------------------------------------------------------------------
+update_checking = Checking for updates…
+update_up_to_date_short = You're up to date (v{version}).
+update_no_feed = No update feed URL configured.
+update_check_failed = Update check failed.
+update_available_short = Update available: v{version}.
+update_dialog_title = An update is available!
+update_window_title = Update available — {app_name}
+update_dialog_versions = Version {version}  (you have {current})
+update_button_later = Later
+update_button_download = Download & install
+update_no_link = No download link
+update_no_link_msg = This update has no download link yet.
+
+Check the project's GitHub page for the latest release.
+update_downloading = Downloading update…
+update_download_progress = Downloading… {done} / {total}
+update_invalid_package = Invalid update package: {error}
+update_exe_not_exe = You're running the EXE build, but this update is a source zip. The feed's "exe_url" must point at the new .exe file.
+update_no_exe_fallback = No EXE exists for this version. Downloading the source code instead…
+update_button_install_source = Install source code
+update_source_confirm = No EXE is published for version {version}, so only the source code can be installed next to the app.
+
+Continue?
+update_source_installed_exe = The source code for version {version} was installed next to the app. The EXE itself was not updated — grab the EXE from the website when it's available.
+update_download_complete = Download complete. Ready to install.
+update_button_install_restart = Install & restart
+update_install_confirm = Install version {version}?
+
+The app will close and restart with the new version.
+update_backup_note = A backup of the current files is kept next to the app.
+update_no_backup_note = No backup will be saved (backups are turned off in Settings).
+update_failed = Update failed: {error}
+update_download_failed = Download failed.
+update_download_error = Could not download the update:
+
+{error}
+update_up_to_date_title = You're up to date!
+
+Latest version: {version}
+Your version:    {current}
+
+# ---------------------------------------------------------------------------
+[downgrade]
+# ---------------------------------------------------------------------------
+downgrade_title = Downgrade the app
+downgrade_window_title = Downgrade — {app_name}
+downgrade_hint = Pick an older version to install.  (current: v{version})
+downgrade_loading = Loading available versions…
+downgrade_none = No older versions published in the feed yet.
+downgrade_none_item = (none)
+downgrade_no_versions = (no versions available)
+downgrade_found = {count} older version(s) found. Select one, then press Download & install.
+downgrade_no_link = This version has no download link in the feed.
+downgrade_close = Close
+
+# ---------------------------------------------------------------------------
+[merge_midi]
+# ---------------------------------------------------------------------------
+merge_toggle = Merge another MIDI into the output
+merge_browse = Choose MIDI...
+merge_clear = Clear
+merge_hint = Tick this to append a second MIDI (unduplicated) after the duplicated part.
+merge_none = No MIDI chosen
+merge_loading = Loading merge MIDI...
+merge_loaded = Merging: {name} ({tracks} track{s}, {notes} notes), added once
+merge_open_title = Choose the MIDI to merge (appended unduplicated)
+
+# ---------------------------------------------------------------------------
+[run_dialogs]
+# ---------------------------------------------------------------------------
+run_need_file = Choose a MIDI file first (click the document in the middle).
+run_still_loading = The file is still loading. Please wait a moment and press Start again.
+run_error_multiplier_number = Multiplier must be a whole number between 1 and 65535.
+run_error_multiplier_range = Multiplier must be between 1 and 65535.
+run_error_output_same = Output path must be different from the input file.
+run_overwrite_confirm = {path}
+
+already exists. Overwrite it?
+run_error_no_tracks = Select at least one track to multiply (File properties → tracks).
+run_error_merge_missing = Tick "Merge another MIDI" and choose a file, or untick it.
+run_error_merge_not_loaded = The merge MIDI is still loading. Please wait a moment and press Start again.
+run_error_merge_division = The merge MIDI uses a different timing division ({merge} vs {main}). Re-export it with the same division as the main file.
+run_error_merge_tracks = The output would need {tracks} tracks, but a MIDI file supports at most {max}. Lower the multiplier or merge a smaller MIDI.
+run_error_track_too_big = The merged track would be about {size}, but a MIDI track is limited to 4 GB ({max} bytes). Lower the multiplier or use track duplication instead.
+run_cap_notice = The requested multiplier (×{multiplier}) would produce more than 65,535 tracks.
+
+It was capped to ×{effective} so the output has {tracks} tracks total.
+run_quit_confirm = A duplication is still running. Quit anyway?
+
+# ---------------------------------------------------------------------------
+[finish_dialog]
+# ---------------------------------------------------------------------------
+finish_title = Duplication complete!
+finish_tracks = Tracks:          {count}
+finish_multiplier = Multiplier:      ×{multiplier}
+finish_multiplier_capped = Multiplier:      ×{effective} (capped from ×{requested})
+finish_multiplied = Multiplied:      track {tracks}
+finish_merge = Merged MIDI:     {name} ({tracks} track(s), {notes} notes, added once)
+finish_note_single_track = Mode:           notes (merged into 1 track)
+finish_total_notes = Total notes:     {count}
+finish_uncompressed = Uncompressed:    {size}
+finish_compressed = Compressed:      {size}
+finish_archive_format = Archive format:  {format}
+finish_compress_passes = Compression passes: {count}
+finish_elapsed = Elapsed:         {seconds}
+finish_avg_speed = Avg. speed:      {speed}
+finish_saved_to = Saved to:
+
+# ---------------------------------------------------------------------------
+[file_dialogs]
+# ---------------------------------------------------------------------------
+file_open_title = Choose a 1-track MIDI file
+file_save_title = Save duplicated MIDI as
+file_default_name = MIDIOUT.mid.xz
+filetype_midi = MIDI files
+filetype_midi_archive = Compressed MIDI archive
+filetype_all = All files
+
+# ---------------------------------------------------------------------------
+[ram_modes]
+# ---------------------------------------------------------------------------
+ram_normal = Normal 1×
+ram_double = Double 2×
+ram_triple = Triple 3×
+ram_other = {multiplier}×
+
+# ---------------------------------------------------------------------------
+[loaders]
+# ---------------------------------------------------------------------------
+loader_standard = standard
+loader_large = Large MIDI Loader
+loader_mega = Mega MIDI Loader
+
+# ---------------------------------------------------------------------------
+[help]
+# ---------------------------------------------------------------------------
+help_text = Systematics TRILLION MIDI maker
+================================
+
+1. Click the document in the middle to choose a MIDI file.
+2. In File properties, tick the track(s) you want to multiply.
+3. Set the track multiplier (1 to 65,535).
+4. Press Start.
+
+What it does
+------------
+Each ticked (selected) track is repeated your chosen number of times;
+unticked tracks are kept exactly once. So a melody track can stay the
+same while a "spam" track is multiplied up to 65,535 times. The total
+track count is capped at 65,535 (the MIDI limit), so when other tracks
+are kept the multiplier is reduced automatically to fit.
+
+Multiple tracks
+---------------
+Multi-track MIDI files are supported. Open File properties to see every
+track (with its note count and name) and choose which ones get
+multiplied. Your selection is remembered per file.
+
+Why compress?
+--------------
+The uncompressed result can be many gigabytes, but because every track
+is identical it compresses to almost nothing. Settings let you pick the
+archive format: .xz (default), .gz, .bz2, .zst, .zip or .7z. Decompress
+it with any tool that understands the format (7-Zip opens them all) to
+get the full multi-track .mid back.
+
+Fast mode
+---------
+Streamed mode (default) compresses the whole file in one pass and gives
+the smallest output. Fast mode compresses the track once and repeats
+that block (concatenated XZ/gzip/bzip2/zstd streams, or repeated zip
+entries) — it is nearly instant but larger. 7z is always a single
+compression pass (the format has no repeat-block trick), so huge
+multipliers are slower in 7z — prefer xz/gz/zip for giant black midis.
+
+Compression presets run from 0 (fastest, larger) to 9 (slowest, smallest).
+
+Compression passes
+------------------
+In Settings, choose how many times the file is recompressed: 1 (plain,
+e.g. .gz), 2 (double, .gz.xz) or 3 (triple, .gz.xz.xz). Each extra pass
+recompresses the previous file with XZ and shrinks Fast-mode output
+dramatically. Decompress the same number of times to get the .mid back.
+
+Memory
+------
+Choosing a file loads every track into RAM, so a 100 MB file uses
+roughly 100 MB of memory (1 GB file = ~1 GB of RAM). This is why
+repeated runs are instant: the tracks are never re-read from disk.
+
+Theme
+-----
+Switch between dark and light mode in Settings. The change applies as
+soon as you save.
+
+Updates
+-------
+The app checks its built-in update feed (hosted on GitHub Pages) on
+startup, and you can press Settings > Check for updates any time. When
+a newer version is found you can download and install it in one click
+— the app backs up the old files and restarts itself.
+
+
+# ---------------------------------------------------------------------------
+[about]
+# ---------------------------------------------------------------------------
+about_text = {app_name}
+Version {version}
+
+Turns a MIDI into a gigantic multi-track black MIDI by multiplying
+the tracks you choose, compressed into a tiny .xz file.
+
+Built with Python + tkinter. Have fun!

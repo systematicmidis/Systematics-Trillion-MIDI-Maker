@@ -1,0 +1,28 @@
+# Build output (produced by build_exe.bat / build_msi.bat / make_portable.bat)
+/dist/
+/build/
+/.tools/
+_backup_*/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Local scratch (WiX/MSI experiments, agent metadata)
+.wix/
+.stocktest/
+.build_msi.bak
+.lic_*.rtf
+.freebuff/
